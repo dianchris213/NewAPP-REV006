@@ -80,6 +80,42 @@ export function AppShell({
     if (hydrated && !user) navigate({ to: "/login" });
   }, [hydrated, user, navigate]);
 
+  // Rapid double-tap guard: ignore a second tap within 400ms so state
+  // transitions stay clean.
+  const lastTapRef = useRef(0);
+  const guard = useCallback((fn: () => void) => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 400) return;
+    lastTapRef.current = now;
+    fn();
+  }, []);
+
+  const handleAdd = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      guard(() => setAddTxOpen(true));
+    },
+    [guard, setAddTxOpen],
+  );
+
+  // "Bulan" shortcut: purge every other filter, pin the current month, and
+  // open the "Lihat Semua" overlay in one clean transition.
+  const handleMonthShortcut = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      guard(() => {
+        resetTxFilters();
+        setTxFilters({ month: String(new Date().getMonth()) });
+        openCurrentMonth();
+      });
+    },
+    [guard, resetTxFilters, setTxFilters, openCurrentMonth],
+  );
+
+  const handleCloseAllTx = useCallback(() => setAllTxOpen(false), [setAllTxOpen]);
+
   return (
     <div className="relative flex min-h-screen flex-col bg-background text-on-background antialiased">
       <div className="pointer-events-none fixed -top-24 left-1/2 h-64 w-[420px] -translate-x-1/2 rounded-full bg-primary-container/25 blur-[90px]" />
