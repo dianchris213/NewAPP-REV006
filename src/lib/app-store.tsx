@@ -24,7 +24,30 @@ export type User = {
   name: string;
   handle: string;
   provider: "telegram" | "google";
+  avatar?: string;
 };
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+};
+
+export const defaultNotifications: AppNotification[] = [
+  {
+    id: "n1",
+    title: "Transaksi tersimpan",
+    body: "Pengeluaran Rp 45.000 (Transport) berhasil dicatat.",
+    time: "5 menit lalu",
+  },
+  {
+    id: "n2",
+    title: "Ringkasan mingguan siap",
+    body: "Pengeluaran minggu ini 12% lebih rendah dari minggu lalu.",
+    time: "Kemarin",
+  },
+];
 
 export type TxFilters = {
   month: string;
@@ -98,6 +121,10 @@ type AppState = {
   settings: Settings;
   addTxOpen: boolean;
   allTxOpen: boolean;
+  notifications: AppNotification[];
+  unreadCount: number;
+  markNotificationsRead: () => void;
+  updateProfile: (update: { name?: string; avatar?: string }) => void;
   txFilters: TxFilters;
   setTxFilters: (update: Partial<TxFilters>) => void;
   resetTxFilters: () => void;
@@ -124,6 +151,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [allTxOpen, setAllTxOpen] = useState(false);
   const [txFilters, setTxFiltersState] = useState<TxFilters>(defaultTxFilters);
+  const [notifications] = useState<AppNotification[]>(defaultNotifications);
+  const [unreadCount, setUnreadCount] = useState(defaultNotifications.length);
+
+  const markNotificationsRead = useCallback(() => setUnreadCount(0), []);
+
+  const updateProfile = useCallback((update: { name?: string; avatar?: string }) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next: User = { ...prev };
+      if (update.name?.trim()) next.name = update.name.trim();
+      if (update.avatar?.trim()) next.avatar = update.avatar.trim();
+      else delete next.avatar;
+      return next;
+    });
+  }, []);
 
   const setTxFilters = useCallback((update: Partial<TxFilters>) => {
     setTxFiltersState((prev) => ({ ...prev, ...update }));
@@ -256,6 +298,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       settings,
       addTxOpen,
       allTxOpen,
+      notifications,
+      unreadCount,
+      markNotificationsRead,
+      updateProfile,
       txFilters,
       setTxFilters,
       resetTxFilters,
@@ -278,6 +324,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
       settings,
       addTxOpen,
       allTxOpen,
+      notifications,
+      unreadCount,
+      markNotificationsRead,
+      updateProfile,
       txFilters,
       setTxFilters,
       resetTxFilters,

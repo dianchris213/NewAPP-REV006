@@ -12,6 +12,22 @@ const tabs = [
   { to: "/settings", label: "Pengaturan", icon: "settings" },
 ] as const;
 
+/** Safe read of the Telegram WebApp user; never throws in a normal browser. */
+function useTelegramUser() {
+  const [tg, setTg] = useState<{ name?: string; avatar?: string; handle?: string } | null>(null);
+  useEffect(() => {
+    const u = (globalThis as any)?.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (!u) return;
+    const name = [u?.first_name, u?.last_name].filter(Boolean).join(" ") || undefined;
+    setTg({
+      ...(name ? { name } : {}),
+      ...(u?.photo_url ? { avatar: u.photo_url as string } : {}),
+      ...(u?.username ? { handle: `@${u.username}` } : {}),
+    });
+  }, []);
+  return tg;
+}
+
 export function TopBar({
   eyebrow,
   title,
@@ -21,38 +37,158 @@ export function TopBar({
   title: string;
   actions?: ReactNode;
 }) {
-  const { user } = useApp();
+  const { user, notifications, unreadCount, markNotificationsRead, updateProfile } = useApp();
+  const tg = useTelegramUser();
+  const [editOpen, setEditOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const [avatarDraft, setAvatarDraft] = useState("");
+
+  // Telegram values win when present, otherwise fall back to mock/store data.
+  const displayName = user?.name ?? tg?.name ?? "Pengguna";
+  const displayAvatar = user?.avatar ?? tg?.avatar;
+  const displayHandle = eyebrow ?? user?.handle ?? tg?.handle ?? "Catatan Keuangan";
+
+  const openEdit = useCallback(() => {
+    setNameDraft(displayName);
+    setAvatarDraft(displayAvatar ?? "");
+    setNotifOpen(false);
+    setEditOpen(true);
+  }, [displayName, displayAvatar]);
+
+  const toggleNotif = useCallback(() => {
+    setNotifOpen((v) => {
+      if (!v) markNotificationsRead();
+      return !v;
+    });
+  }, [markNotificationsRead]);
+
+  const submitProfile = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      updateProfile({ name: nameDraft, avatar: avatarDraft });
+      setEditOpen(false);
+    },
+    [nameDraft, avatarDraft, updateProfile],
+  );
+
   return (
-    <div className="flex items-center justify-between">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-outline-variant/30 bg-surface-container-high text-on-surface-variant">
-          <Icon name="person" className="text-[20px]" />
-        </div>
-        <div className="flex flex-col">
-          <span className="text-meta text-on-surface-variant/80">
-            {eyebrow ?? user?.handle ?? "Catatan Keuangan"}
-          </span>
+    <div className="relative flex items-center justify-between">
+      <button
+        type="button"
+        data-testid="profile-button"
+        aria-label="Edit profil"
+        onClick={openEdit}
+        className="flex min-h-12 items-center gap-3 rounded-full pr-3 text-left transition-colors hover:bg-surface-variant/40 active:scale-[0.98]"
+      >
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-outline-variant/30 bg-surface-container-high text-on-surface-variant">
+          {displayAvatar ? (
+            <img src={displayAvatar} alt={`Foto profil ${displayName}`} className="h-full w-full object-cover" />
+          ) : (
+            <Icon name="person" className="text-[20px]" />
+          )}
+        </span>
+        <span className="flex flex-col">
+          <span className="text-meta text-on-surface-variant/80">{displayHandle}</span>
           <h1 className="m-0 text-section text-on-surface">{title}</h1>
-        </div>
-      </div>
+        </span>
+      </button>
       <div className="flex items-center gap-1 text-on-surface-variant">
         {actions ?? (
           <>
             <button
+              type="button"
               aria-label="Sinkronisasi"
-              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-surface-variant/60"
+              className="flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-surface-variant/60"
             >
               <Icon name="cloud" className="text-[20px]" />
             </button>
             <button
-              aria-label="Notifikasi"
-              className="flex h-10 w-10 items-center justify-center rounded-full transition-colors hover:bg-surface-variant/60"
+              type="button"
+              data-testid="notification-bell"
+              aria-label={
+                unreadCount ? `Notifikasi, ${unreadCount} belum dibaca` : "Notifikasi"
+              }
+              aria-expanded={notifOpen}
+              onClick={toggleNotif}
+              className="relative flex h-12 w-12 items-center justify-center rounded-full transition-colors hover:bg-surface-variant/60"
             >
-              <Icon name="notifications" className="text-[20px]" />
+              <Icon name="notifications" className="text-[20px]" fill={notifOpen ? 1 : 0} />
+              {unreadCount > 0 ? (
+                <span className="absolute right-2 top-2 flex h-4 min-w-4 items-center justify-center rounded-full bg-error px-1 text-[9px] font-bold text-on-error">
+                  {unreadCount}
+                </span>
+              ) : null}
             </button>
           </>
         )}
       </div>
+
+      {notifOpen ? (
+        <div
+          data-testid="notification-panel"
+          role="dialog"
+          aria-label="Notifikasi"
+          className="absolute right-0 top-14 z-50 w-[280px] rounded-3xl border border-outline-variant/20 bg-surface-container-high/95 p-2 shadow-xl backdrop-blur-xl"
+        >
+          <div className="flex items-center justify-between px-2 py-1">
+            <span className="text-meta font-semibold text-on-surface-variant">Notifikasi</span>
+            <button
+              type="button"
+              aria-label="Tutup notifikasi"
+              onClick={() => setNotifOpen(false)}
+              className="flex h-8 w-8 items-center justify-center rounded-full text-on-surface-variant hover:bg-surface-variant/60"
+            >
+              <Icon name="close" className="text-[16px]" />
+            </button>
+          </div>
+          <ul className="flex flex-col gap-1">
+            {notifications.map((n) => (
+              <li key={n.id} className="rounded-2xl px-3 py-2 hover:bg-surface-variant/40">
+                <p className="m-0 text-[13px] font-semibold text-on-surface">{n.title}</p>
+                <p className="m-0 text-[12px] text-on-surface-variant/80">{n.body}</p>
+                <span className="text-[10px] text-on-surface-variant/60">{n.time}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      <FullScreenModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        title="Edit Profil"
+        subtitle="Perbarui nama dan foto profil"
+      >
+        <form className="flex flex-col gap-4" onSubmit={submitProfile}>
+          <label className="flex flex-col gap-1">
+            <span className="text-meta text-on-surface-variant/80">Nama</span>
+            <input
+              data-testid="profile-name-input"
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              className="h-12 rounded-2xl border border-outline-variant/30 bg-surface-container-high px-4 text-[14px] text-on-surface outline-none focus-visible:ring-2 focus-visible:ring-primary/60"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-meta text-on-surface-variant/80">URL Avatar</span>
+            <input
+              data-testid="profile-avatar-input"
+              value={avatarDraft}
+              onChange={(e) => setAvatarDraft(e.target.value)}
+              placeholder="https://..."
+              className="h-12 rounded-2xl border border-outline-variant/30 bg-surface-container-high px-4 text-[14px] text-on-surface outline-none placeholder:text-on-surface-variant/60 focus-visible:ring-2 focus-visible:ring-primary/60"
+            />
+          </label>
+          <button
+            type="submit"
+            data-testid="profile-save-button"
+            className="gradient-primary flex h-12 items-center justify-center rounded-full text-[14px] font-semibold text-on-primary-container transition-transform active:scale-95"
+          >
+            Simpan Perubahan
+          </button>
+        </form>
+      </FullScreenModal>
     </div>
   );
 }
