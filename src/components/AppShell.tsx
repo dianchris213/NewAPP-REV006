@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 import { Icon } from "./Icon";
 import { AddTransactionSheet } from "./AddTransactionSheet";
 import { AllTransactionsSheet } from "./AllTransactionsSheet";
@@ -73,6 +73,8 @@ export function AppShell({
     allTxOpen,
     setAllTxOpen,
     openCurrentMonth,
+    setTxFilters,
+    resetTxFilters,
   } = useApp();
   const navigate = useNavigate();
 
@@ -165,7 +167,7 @@ export function AppShell({
       <AddTransactionSheet />
       <AllTransactionsSheet
         open={allTxOpen}
-        onClose={() => setAllTxOpen(false)}
+        onClose={handleCloseAllTx}
         items={transactions}
       />
     </div>
