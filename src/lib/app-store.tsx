@@ -24,7 +24,30 @@ export type User = {
   name: string;
   handle: string;
   provider: "telegram" | "google";
+  avatar?: string;
 };
+
+export type AppNotification = {
+  id: string;
+  title: string;
+  body: string;
+  time: string;
+};
+
+export const defaultNotifications: AppNotification[] = [
+  {
+    id: "n1",
+    title: "Transaksi tersimpan",
+    body: "Pengeluaran Rp 45.000 (Transport) berhasil dicatat.",
+    time: "5 menit lalu",
+  },
+  {
+    id: "n2",
+    title: "Ringkasan mingguan siap",
+    body: "Pengeluaran minggu ini 12% lebih rendah dari minggu lalu.",
+    time: "Kemarin",
+  },
+];
 
 export type TxFilters = {
   month: string;
