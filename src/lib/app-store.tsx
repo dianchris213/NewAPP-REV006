@@ -157,15 +157,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const markNotificationsRead = useCallback(() => setUnreadCount(0), []);
 
   const updateProfile = useCallback((update: { name?: string; avatar?: string }) => {
-    setUser((prev) =>
-      prev
-        ? {
-            ...prev,
-            name: update.name?.trim() ? update.name.trim() : prev.name,
-            avatar: update.avatar?.trim() ? update.avatar.trim() : undefined,
-          }
-        : prev,
-    );
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next: User = { ...prev };
+      if (update.name?.trim()) next.name = update.name.trim();
+      if (update.avatar?.trim()) next.avatar = update.avatar.trim();
+      else delete next.avatar;
+      return next;
+    });
   }, []);
 
   const setTxFilters = useCallback((update: Partial<TxFilters>) => {
