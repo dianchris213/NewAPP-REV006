@@ -95,6 +95,18 @@ function Home() {
   const hidden = Math.max(transactions.length - RECENT_LIMIT, 0);
   
   const openPocket = useCallback((name: string) => setActivePocket(name), []);
+
+  // Hardened close handlers: stop event bubbling and force the boolean state to
+  // false so the modal fully unmounts (freeing its DOM subtree) instead of
+  // merely being hidden.
+  const closeBalance = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setBalanceOpen(false);
+  }, []);
+  const closePocket = useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setActivePocket(null);
+  }, []);
   const pocketItems = useMemo(
     () =>
       activePocket
