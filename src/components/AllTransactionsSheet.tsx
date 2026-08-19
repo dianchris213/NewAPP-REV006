@@ -58,6 +58,9 @@ export function AllTransactionsSheet({
     category !== "all" ||
     keyword.trim() !== "";
 
+  const [showFilters, setShowFilters] = useState(false);
+  const closingRef = useRef(false);
+
   useEffect(() => {
     if (!open) return;
     const prev = document.body.style.overflow;
@@ -66,6 +69,37 @@ export function AllTransactionsSheet({
       document.body.style.overflow = prev;
     };
   }, [open]);
+
+  // Cleanup: when the sheet closes, purge every filter and collapse the panel
+  // so no phantom state survives into the next open.
+  useEffect(() => {
+    if (open) {
+      closingRef.current = false;
+      return;
+    }
+    setShowFilters(false);
+    resetTxFilters();
+  }, [open, resetTxFilters]);
+
+  const handleReset = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      resetTxFilters();
+    },
+    [resetTxFilters],
+  );
+
+  const handleClose = useCallback(
+    (e: React.MouseEvent) => {
+      e.stopPropagation();
+      // Guard against rapid double-clicks triggering close twice.
+      if (closingRef.current) return;
+      closingRef.current = true;
+      setShowFilters(false);
+      onClose();
+    },
+    [onClose],
+  );
 
   const categories = useMemo(
     () => Array.from(new Set(items.map((t) => t.category))).sort(),
