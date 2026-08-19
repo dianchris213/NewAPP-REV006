@@ -190,7 +190,12 @@ function NavItem({
       to={to}
       aria-label={label}
       aria-current={active ? "page" : undefined}
-      className={`flex w-16 flex-col items-center justify-center gap-1 transition-all active:scale-90 ${
+      onClick={(e) => {
+        // Empty/hash anchors must never jump the viewport to the top.
+        if (!to || to === "#") e.preventDefault();
+        if (active) e.preventDefault();
+      }}
+      className={`flex min-h-12 w-16 flex-col items-center justify-center gap-1 transition-all active:scale-90 ${
         active ? "text-primary" : "text-on-surface-variant/70"
       }`}
     >
