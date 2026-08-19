@@ -151,6 +151,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [addTxOpen, setAddTxOpen] = useState(false);
   const [allTxOpen, setAllTxOpen] = useState(false);
   const [txFilters, setTxFiltersState] = useState<TxFilters>(defaultTxFilters);
+  const [notifications] = useState<AppNotification[]>(defaultNotifications);
+  const [unreadCount, setUnreadCount] = useState(defaultNotifications.length);
+
+  const markNotificationsRead = useCallback(() => setUnreadCount(0), []);
+
+  const updateProfile = useCallback((update: { name?: string; avatar?: string }) => {
+    setUser((prev) =>
+      prev
+        ? {
+            ...prev,
+            name: update.name?.trim() ? update.name.trim() : prev.name,
+            avatar: update.avatar?.trim() ? update.avatar.trim() : undefined,
+          }
+        : prev,
+    );
+  }, []);
 
   const setTxFilters = useCallback((update: Partial<TxFilters>) => {
     setTxFiltersState((prev) => ({ ...prev, ...update }));
