@@ -121,6 +121,10 @@ type AppState = {
   settings: Settings;
   addTxOpen: boolean;
   allTxOpen: boolean;
+  notifications: AppNotification[];
+  unreadCount: number;
+  markNotificationsRead: () => void;
+  updateProfile: (update: { name?: string; avatar?: string }) => void;
   txFilters: TxFilters;
   setTxFilters: (update: Partial<TxFilters>) => void;
   resetTxFilters: () => void;
