@@ -101,8 +101,8 @@ export function AppShell({
         ))}
         <button
           type="button"
-          onClick={() => setAddTxOpen(true)}
-          className="group -mt-8 flex w-16 flex-col items-center justify-center transition-all active:scale-95"
+          onClick={handleAdd}
+          className="group -mt-8 flex min-h-12 w-16 flex-col items-center justify-center transition-all active:scale-95"
           aria-label="Tambah transaksi"
         >
           <div className="gradient-primary flex h-14 w-14 items-center justify-center rounded-full text-on-primary-container shadow-glow ring-4 ring-background">
@@ -111,10 +111,10 @@ export function AppShell({
         </button>
         <button
           type="button"
-          onClick={openCurrentMonth}
+          onClick={handleMonthShortcut}
           aria-label="Transaksi bulan ini"
           aria-haspopup="dialog"
-          className="flex w-14 flex-col items-center justify-center gap-1 text-on-surface-variant/70 transition-all active:scale-90"
+          className="flex min-h-12 min-w-12 flex-col items-center justify-center gap-1 text-on-surface-variant/70 transition-all active:scale-90"
         >
           <span className="flex h-7 w-12 items-center justify-center rounded-full">
             <Icon name="calendar_month" className="text-[22px]" />
