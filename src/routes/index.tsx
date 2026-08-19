@@ -267,7 +267,7 @@ function Home() {
 
       <FullScreenModal
         open={balanceOpen}
-        onClose={() => setBalanceOpen(false)}
+        onClose={closeBalance}
         title="Rincian Saldo"
         subtitle={`Total ${formatIDR(balance)}`}
       >
@@ -296,7 +296,7 @@ function Home() {
 
       <FullScreenModal
         open={activePocket !== null}
-        onClose={() => setActivePocket(null)}
+        onClose={closePocket}
         title={`Transaksi Hari Ini - ${activePocket ?? ""}`}
         subtitle={`${pocketItems.length} entri`}
       >
