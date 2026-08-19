@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Icon } from "./Icon";
 import { TransactionList } from "./TransactionList";
@@ -114,60 +114,90 @@ export function AllTransactionsSheet({
         <div className="flex shrink-0 items-center gap-2">
           <button
             type="button"
-            aria-label="Reset filter"
-            disabled={!hasActiveFilters}
-            onClick={resetTxFilters}
-            className="flex h-10 items-center gap-1 rounded-full bg-surface-variant px-3 text-[12px] font-semibold text-on-surface-variant transition-transform active:scale-95 disabled:opacity-40"
-          >
-            <Icon name="restart_alt" className="text-[18px]" />
-            Reset
-          </button>
-          <button
-            type="button"
             aria-label="Tutup"
-            onClick={onClose}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-variant text-on-surface-variant transition-transform active:scale-95"
+            onClick={handleClose}
+            className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-variant text-on-surface-variant transition-transform active:scale-95"
           >
             <Icon name="close" className="text-[20px]" />
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2 px-margin-main py-3 sm:grid-cols-4">
-        <FilterSelect
-          label="Bulan"
-          value={month}
-          onChange={(v) => setTxFilters({ month: v })}
-          options={[
-            { value: "all", label: "Semua Bulan" },
-            ...MONTHS.map((m, i) => ({ value: String(i), label: m })),
-          ]}
-        />
-        <FilterSelect
-          label="Mingguan"
-          value={week}
-          onChange={(v) => setTxFilters({ week: v })}
-          options={WEEK_OPTIONS}
-        />
-        <FilterSelect
-          label="Jenis"
-          value={type}
-          onChange={(v) => setTxFilters({ type: v as "all" | "income" | "expense" })}
-          options={[
-            { value: "all", label: "Semua Jenis" },
-            { value: "income", label: "Pemasukan" },
-            { value: "expense", label: "Pengeluaran" },
-          ]}
-        />
-        <FilterSelect
-          label="Kategori"
-          value={category}
-          onChange={(v) => setTxFilters({ category: v })}
-          options={[
-            { value: "all", label: "Semua Kategori" },
-            ...categories.map((c) => ({ value: c, label: c })),
-          ]}
-        />
+      <div className="flex items-center gap-2 px-margin-main pt-3">
+        <button
+          type="button"
+          aria-expanded={showFilters}
+          aria-controls="tx-filter-panel"
+          onClick={() => setShowFilters((v) => !v)}
+          className="flex h-11 min-w-[48px] flex-1 items-center justify-center gap-1.5 rounded-full border border-outline-variant/30 bg-surface-container-high px-4 text-[12px] font-semibold text-on-surface-variant transition-transform active:scale-95"
+        >
+          <Icon name="filter_alt" className="text-[18px]" fill={hasActiveFilters ? 1 : 0} />
+          {showFilters ? "Sembunyikan Filter" : "Tampilkan Filter"}
+          {hasActiveFilters ? (
+            <span className="ml-1 h-2 w-2 rounded-full bg-primary" aria-hidden="true" />
+          ) : null}
+          <Icon
+            name="expand_more"
+            className={`text-[18px] transition-transform duration-300 ${showFilters ? "rotate-180" : ""}`}
+          />
+        </button>
+      </div>
+
+      <div
+        id="tx-filter-panel"
+        aria-hidden={!showFilters}
+        className={`grid px-margin-main transition-[grid-template-rows,opacity] duration-300 ease-out ${
+          showFilters ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="grid grid-cols-2 gap-2 pt-3 sm:grid-cols-4">
+            <FilterSelect
+              label="Bulan"
+              value={month}
+              onChange={(v) => setTxFilters({ month: v })}
+              options={[
+                { value: "all", label: "Semua Bulan" },
+                ...MONTHS.map((m, i) => ({ value: String(i), label: m })),
+              ]}
+            />
+            <FilterSelect
+              label="Mingguan"
+              value={week}
+              onChange={(v) => setTxFilters({ week: v })}
+              options={WEEK_OPTIONS}
+            />
+            <FilterSelect
+              label="Jenis"
+              value={type}
+              onChange={(v) => setTxFilters({ type: v as "all" | "income" | "expense" })}
+              options={[
+                { value: "all", label: "Semua Jenis" },
+                { value: "income", label: "Pemasukan" },
+                { value: "expense", label: "Pengeluaran" },
+              ]}
+            />
+            <FilterSelect
+              label="Kategori"
+              value={category}
+              onChange={(v) => setTxFilters({ category: v })}
+              options={[
+                { value: "all", label: "Semua Kategori" },
+                ...categories.map((c) => ({ value: c, label: c })),
+              ]}
+            />
+          </div>
+          <button
+            type="button"
+            aria-label="Reset filter"
+            disabled={!hasActiveFilters}
+            onClick={handleReset}
+            className="mt-3 flex h-11 w-full items-center justify-center gap-1 rounded-full bg-surface-variant px-3 text-[12px] font-semibold text-on-surface-variant transition-transform active:scale-95 disabled:opacity-40"
+          >
+            <Icon name="restart_alt" className="text-[18px]" />
+            Reset Filter
+          </button>
+        </div>
       </div>
 
       <div className="px-margin-main pb-3">
